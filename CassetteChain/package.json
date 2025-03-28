@@ -13,9 +13,10 @@
     "@rainbow-me/rainbowkit": "^2.2.4",
     "axios": "^1.8.4",
     "dotenv": "^16.4.7",
-    "ethers": "^5.7.2",
+    "ethers": "^5.8.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-router-dom": "^7.4.0",
     "viem": "^2.24.1",
     "wagmi": "^2.14.15"
   },
