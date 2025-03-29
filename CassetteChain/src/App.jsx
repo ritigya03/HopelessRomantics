@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import Login from "./components/Login";
 import Playlists from "./components/Playlists";
 
-const App = () => {
-  const [token, setToken] = useState(localStorage.getItem("token") || "");
+const AuthHandler = ({ setToken }) => {
+  const navigate = useNavigate();
 
   useEffect(() => {
     const hash = window.location.hash;
@@ -12,13 +12,20 @@ const App = () => {
 
     if (!storedToken && hash) {
       const newToken = new URLSearchParams(hash.replace("#", "?")).get("access_token");
-      window.location.hash = "";
+      window.location.hash = ""; // Clear hash from URL
       if (newToken) {
         localStorage.setItem("token", newToken);
-        setToken(newToken); // Update state immediately
+        setToken(newToken);
+        navigate("/playlists"); // Redirect to playlists
       }
     }
-  }, []);
+  }, [navigate, setToken]);
+
+  return null; // This component doesn't render anything
+};
+
+const App = () => {
+  const [token, setToken] = useState(localStorage.getItem("token") || "");
 
   const logout = () => {
     setToken("");
@@ -27,6 +34,7 @@ const App = () => {
 
   return (
     <Router>
+      <AuthHandler setToken={setToken} />
       <Routes>
         <Route path="/" element={!token ? <Login /> : <Navigate to="/playlists" />} />
         <Route
