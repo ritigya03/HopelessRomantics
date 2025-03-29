@@ -58,7 +58,7 @@ const Login = () => {
       style={{ backgroundImage: `url(${bgImage})` }}
     >
       <div className="flex flex-col items-center">
-        <img src={logoImage} alt="Logo" className="w-[1000px] mt-[-150px] mb-10 h-[400px]" />
+        <img src={logoImage} alt="Logo" className="w-[800px] h:[0px] 2xl:w-[1000px] 2xl:mt-[-150px] mb-10 h-[400px]" />
         <h1 className="text-xl text-center font-serif mt-5 press-start leading-loose w-[60%] text-pink-950">
           Mint & send personalized NFT mixtapes with secret messages for your special someone! 🎶
         </h1>

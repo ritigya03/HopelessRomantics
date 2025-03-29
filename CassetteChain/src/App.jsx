@@ -2,45 +2,38 @@ import { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./components/Login";
 import Playlists from "./components/Playlists";
-import { getSpotifyAuthURL } from "./utils/auth";
 
 const App = () => {
-  const [token, setToken] = useState("");
+  const [token, setToken] = useState(localStorage.getItem("token") || "");
 
   useEffect(() => {
     const hash = window.location.hash;
-    let storedToken = window.localStorage.getItem("token");
+    let storedToken = localStorage.getItem("token");
 
     if (!storedToken && hash) {
-      storedToken = new URLSearchParams(hash.replace("#", "?")).get("access_token");
+      const newToken = new URLSearchParams(hash.replace("#", "?")).get("access_token");
       window.location.hash = "";
-      if (storedToken) {
-        window.localStorage.setItem("token", storedToken);
-        setToken(storedToken);
+      if (newToken) {
+        localStorage.setItem("token", newToken);
+        setToken(newToken); // Update state immediately
       }
-    } else {
-      setToken(storedToken);
     }
   }, []);
 
   const logout = () => {
     setToken("");
-    window.localStorage.removeItem("token");
+    localStorage.removeItem("token");
   };
 
   return (
     <Router>
-      <div className="">
-        
-        <Routes>
-          <Route
-            path="/"
-            element={!token ? <Login /> : <Navigate to="/playlists" />}
-          />
-          <Route
-            path="/playlists"
-            element={token ? (
-              <>
+      <Routes>
+        <Route path="/" element={!token ? <Login /> : <Navigate to="/playlists" />} />
+        <Route
+          path="/playlists"
+          element={
+            token ? (
+              <div className="flex flex-col items-center">
                 <button
                   onClick={logout}
                   className="mb-4 px-4 py-2 bg-red-500 rounded-lg hover:bg-red-600"
@@ -48,13 +41,13 @@ const App = () => {
                   Logout
                 </button>
                 <Playlists token={token} />
-              </>
+              </div>
             ) : (
               <Navigate to="/" />
-            )}
-          />
-        </Routes>
-      </div>
+            )
+          }
+        />
+      </Routes>
     </Router>
   );
 };
