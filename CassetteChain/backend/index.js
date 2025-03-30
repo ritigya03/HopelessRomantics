@@ -8,7 +8,7 @@ const app = express();
 
 // Allow requests from the frontend
 app.use(cors({
-  origin: 'http://localhost:5173',  // frontend URL
+  origin: 'http://localhost:5173',
   methods: ['GET', 'POST'],
   credentials: true,
 }));
@@ -16,7 +16,7 @@ app.use(cors({
 app.use(express.json());
 
 const PORT = process.env.PORT || 5000;
-const TOKEN_FILE = 'tokens.json'; // Store tokens persistently
+const TOKEN_FILE = 'tokens.json';
 
 // Initialize Spotify API with credentials
 const spotifyApi = new SpotifyWebApi({
@@ -25,60 +25,63 @@ const spotifyApi = new SpotifyWebApi({
     redirectUri: process.env.SPOTIFY_REDIRECT_URI,
 });
 
-// Load stored tokens from file
+// Load stored tokens per user
 function loadTokens() {
     if (fs.existsSync(TOKEN_FILE)) {
         return JSON.parse(fs.readFileSync(TOKEN_FILE));
     }
-    return { accessToken: null, refreshToken: null, expiresIn: 3600, timestamp: null };
+    return {};
 }
+
 let userTokens = loadTokens();
 
-// Save tokens persistently
+// Save tokens persistently per user
 function saveTokens() {
     fs.writeFileSync(TOKEN_FILE, JSON.stringify(userTokens));
 }
 
-// Function to refresh access token
-async function refreshAccessToken() {
+// Refresh Access Token per user
+async function refreshAccessToken(userId) {
     try {
-        if (!userTokens.refreshToken) {
-            throw new Error("No refresh token available. Please log in again.");
+        if (!userTokens[userId] || !userTokens[userId].refreshToken) {
+            throw new Error("No refresh token found. Please log in again.");
         }
-        console.log("🔄 Refreshing access token...");
 
-        spotifyApi.setRefreshToken(userTokens.refreshToken);
+        console.log(`🔄 Refreshing access token for user: ${userId}`);
+
+        spotifyApi.setRefreshToken(userTokens[userId].refreshToken);
         const data = await spotifyApi.refreshAccessToken();
 
-        userTokens.accessToken = data.body.access_token;
-        userTokens.expiresIn = data.body.expires_in;
-        userTokens.timestamp = Date.now();
+        userTokens[userId].accessToken = data.body.access_token;
+        userTokens[userId].expiresIn = data.body.expires_in;
+        userTokens[userId].timestamp = Date.now();
 
-        console.log("✅ New Access Token:", userTokens.accessToken);
-        spotifyApi.setAccessToken(userTokens.accessToken);
+        console.log(`✅ New Access Token for ${userId}: ${userTokens[userId].accessToken}`);
+        spotifyApi.setAccessToken(userTokens[userId].accessToken);
         saveTokens();
-        return userTokens.accessToken;
+        return userTokens[userId].accessToken;
     } catch (error) {
-        console.error("❌ Error refreshing access token:", error.message);
+        console.error(`❌ Error refreshing access token for ${userId}:`, error.message);
         throw new Error("Failed to refresh access token.");
     }
 }
 
-// Ensure Access Token is valid
-async function ensureValidAccessToken() {
-    if (!userTokens.accessToken || !userTokens.refreshToken) {
-        throw new Error("No valid tokens found. Please log in again.");
+// Ensure Access Token is valid per user
+async function ensureValidAccessToken(userId) {
+    if (!userId || !userTokens[userId]) {
+        throw new Error("User ID not found. Please log in again.");
     }
 
-    const expiresInMs = userTokens.expiresIn * 1000;
-    const tokenAge = Date.now() - userTokens.timestamp;
+    const tokens = userTokens[userId];
+    const expiresInMs = tokens.expiresIn * 1000;
+    const tokenAge = Date.now() - tokens.timestamp;
 
     if (tokenAge >= expiresInMs) {
-        console.log("🔄 Access token expired. Refreshing...");
-        return await refreshAccessToken();
+        console.log(`🔄 Token expired for ${userId}, refreshing...`);
+        return await refreshAccessToken(userId);
     }
 
-    return userTokens.accessToken;
+    return tokens.accessToken;
 }
 
 // LOGIN Route (To Get Authorization Code)
@@ -105,7 +108,7 @@ app.get('/callback', (req, res) => {
         <pre>${code}</pre>
         <script>
             setTimeout(() => {
-                window.location = "http://localhost:3000"; // Redirect to frontend after 5s
+                window.location = "http://localhost:3000";
             }, 5000);
         </script>
     `);
@@ -117,23 +120,38 @@ app.post('/api/login', async (req, res) => {
     if (!code) {
         return res.status(400).json({ error: "Authorization code is required." });
     }
+
     try {
         const data = await spotifyApi.authorizationCodeGrant(code);
-        userTokens = {
-            accessToken: data.body.access_token,
-            refreshToken: data.body.refresh_token,
-            expiresIn: data.body.expires_in,
+        const accessToken = data.body.access_token;
+        const refreshToken = data.body.refresh_token;
+        const expiresIn = data.body.expires_in;
+
+        // Get user's Spotify ID
+        spotifyApi.setAccessToken(accessToken);
+        const userData = await spotifyApi.getMe();
+        const userId = userData.body.id;
+
+        // Store tokens per user
+        userTokens[userId] = {
+            accessToken,
+            refreshToken,
+            expiresIn,
             timestamp: Date.now(),
         };
-        spotifyApi.setAccessToken(userTokens.accessToken);
-        spotifyApi.setRefreshToken(userTokens.refreshToken);
-        console.log("✅ Tokens received and stored.");
+
+        spotifyApi.setRefreshToken(refreshToken);
+        console.log(`✅ Tokens stored for user: ${userId}`);
+
         saveTokens();
+
         res.json({
             message: "✅ Tokens received!",
-            accessToken: userTokens.accessToken,
-            refreshToken: userTokens.refreshToken,
+            accessToken,
+            refreshToken,
+            userId,
         });
+
     } catch (error) {
         console.error("❌ Spotify Login Error:", error.message);
         res.status(400).json({ error: "Failed to exchange authorization code for tokens" });
@@ -142,8 +160,13 @@ app.post('/api/login', async (req, res) => {
 
 // Refresh Token Endpoint (Manual Trigger)
 app.post('/api/refresh', async (req, res) => {
+    const { userId } = req.body;
+    if (!userId) {
+        return res.status(400).json({ error: "User ID is required." });
+    }
+
     try {
-        const newAccessToken = await refreshAccessToken();
+        const newAccessToken = await refreshAccessToken(userId);
         res.json({ message: "✅ Access token refreshed!", accessToken: newAccessToken });
     } catch (error) {
         res.status(400).json({ error: error.message });
@@ -151,17 +174,24 @@ app.post('/api/refresh', async (req, res) => {
 });
 
 // Fetch User Playlists
-app.get('/api/playlists', async (req, res) => {
-    try {
-        const accessToken = await ensureValidAccessToken();
-        spotifyApi.setAccessToken(accessToken);
-        const data = await spotifyApi.getUserPlaylists();
-        res.json(data.body);
-    } catch (error) {
-        console.error("❌ Error fetching playlists:", error.message);
-        res.status(400).json({ error: "Failed to fetch playlists" });
+// Update this endpoint to handle POST
+app.post('/api/playlists', async (req, res) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+  
+    if (!token) {
+      return res.status(401).json({ error: "Authorization token required" });
     }
-});
+  
+    try {
+      spotifyApi.setAccessToken(token);
+      const data = await spotifyApi.getUserPlaylists();
+      res.json(data.body);
+    } catch (error) {
+      console.error("Playlist error:", error);
+      res.status(401).json({ error: "Invalid or expired token" });
+    }
+  });
 
 // Test Route
 app.get('/', (req, res) => {
