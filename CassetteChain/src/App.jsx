@@ -1,70 +1,57 @@
 import { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import Login from "./components/Login";
-import Playlists from "./components/Playlists";
+import Playlists from "./components/Playlists"; // Import Playlists component
 
-const AuthHandler = ({ setAuthData }) => {
+const AuthHandler = ({ setToken }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
     const hash = window.location.hash;
-    const storedAuth = JSON.parse(localStorage.getItem("spotifyAuth"));
+    let storedToken = localStorage.getItem("token");
 
-    if (!storedAuth && hash) {
-      const params = new URLSearchParams(hash.replace("#", "?"));
-      const accessToken = params.get("access_token");
-      const expiresIn = params.get("expires_in");
-      
-      if (accessToken) {
-        const authData = {
-          token: accessToken,
-          expiresAt: Date.now() + expiresIn * 1000
-        };
-        
-        localStorage.setItem("spotifyAuth", JSON.stringify(authData));
-        setAuthData(authData);
-        navigate("/playlists");
+    if (!storedToken && hash) {
+      const newToken = new URLSearchParams(hash.replace("#", "?")).get("access_token");
+      window.location.hash = ""; // Clear hash from URL
+      if (newToken) {
+        localStorage.setItem("token", newToken);
+        setToken(newToken);
+        navigate("/playlists"); // Redirect to playlists
       }
     }
-  }, [navigate, setAuthData]);
+  }, [navigate, setToken]);
 
-  return null;
+  return null; // This component doesn't render anything
 };
 
 const App = () => {
-  const [authData, setAuthData] = useState(
-    JSON.parse(localStorage.getItem("spotifyAuth")) || null
-  );
+  const [token, setToken] = useState(localStorage.getItem("token") || "");
 
   const logout = () => {
-    localStorage.removeItem("spotifyAuth");
-    setAuthData(null);
-    window.location.href = "/"; // Full reset
+    setToken("");
+    localStorage.removeItem("token");
   };
 
   return (
     <Router>
-      <AuthHandler setAuthData={setAuthData} />
+      <AuthHandler setToken={setToken} />
       <Routes>
-        <Route 
-          path="/" 
-          element={!authData ? <Login /> : <Navigate to="/playlists" replace />} 
-        />
+        <Route path="/" element={!token ? <Login /> : <Navigate to="/playlists" />} />
         <Route
           path="/playlists"
           element={
-            authData ? (
-              <div className="flex flex-col items-center min-h-screen p-4">
+            token ? (
+              <div className="flex flex-col items-center">
                 <button
                   onClick={logout}
-                  className="mb-4 px-4 py-2 bg-red-500 text-white rounded"
+                  className="mb-4 px-4 py-2 bg-red-500 rounded-lg hover:bg-red-600"
                 >
                   Logout
                 </button>
-                <Playlists />
+                <Playlists token={token} /> {/* Pass token to Playlists component */}
               </div>
             ) : (
-              <Navigate to="/" replace />
+              <Navigate to="/" />
             )
           }
         />
