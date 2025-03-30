@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import Login from "./components/Login";
-import Playlists from "./components/Playlists";
+import Playlists from "./components/Playlists"; // Import Playlists component
 
 const AuthHandler = ({ setToken }) => {
   const navigate = useNavigate();
@@ -48,7 +48,7 @@ const App = () => {
                 >
                   Logout
                 </button>
-                <Playlists token={token} />
+                <Playlists token={token} /> {/* Pass token to Playlists component */}
               </div>
             ) : (
               <Navigate to="/" />
