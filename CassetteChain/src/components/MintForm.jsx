@@ -1,6 +1,7 @@
 import { useLocation } from 'react-router-dom';
 import playImg from '../assets/Screenshot 2025-03-31 143024.png';
 import "../index.css";
+import { Link } from 'react-router-dom';
 const MintForm = () => {
   const location = useLocation();
   const { name, image } = location.state || {};
@@ -40,8 +41,17 @@ const MintForm = () => {
         >
           Mint and Send
         </button>
+        
       </form>
+     
     </div>
+    <Link to="/playlists">
+        <button 
+        className=" bg-pink-500 hover:bg-pink-600 text-white font-semibold py-2 px-4 rounded-full shadow-md transition-all"
+    >
+        Back
+    </button>
+    </Link>
     </div>
   );
 };
