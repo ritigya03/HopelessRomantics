@@ -69,7 +69,7 @@ const Login = () => {
           className="relative px-10 mt-10 py-8 press-start text-white text-3xl font-semibold rounded-xl border-none transition-transform duration-100 ease-in 
           shadow-lg shadow-pink-900 bg-[#f55b93] hover:bg-[#e60073] active:scale-90"
         >
-          Connect with Spotify 🎵
+          🎵✨ All Playlists 💖🎧 
           {hearts.map((heart) => (
             <span
               key={heart.id}

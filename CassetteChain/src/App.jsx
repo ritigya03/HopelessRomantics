@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import Login from "./components/Login";
-import Playlists from "./components/Playlists"; // Import Playlists component
+import Playlists from "./components/Playlists";
+import MintForm from './components/MintForm';
 
 const AuthHandler = ({ setToken }) => {
   const navigate = useNavigate();
@@ -12,25 +13,20 @@ const AuthHandler = ({ setToken }) => {
 
     if (!storedToken && hash) {
       const newToken = new URLSearchParams(hash.replace("#", "?")).get("access_token");
-      window.location.hash = ""; // Clear hash from URL
+      window.location.hash = "";
       if (newToken) {
         localStorage.setItem("token", newToken);
         setToken(newToken);
-        navigate("/playlists"); // Redirect to playlists
+        navigate("/playlists");
       }
     }
   }, [navigate, setToken]);
 
-  return null; // This component doesn't render anything
+  return null;
 };
 
 const App = () => {
   const [token, setToken] = useState(localStorage.getItem("token") || "");
-
-  const logout = () => {
-    setToken("");
-    localStorage.removeItem("token");
-  };
 
   return (
     <Router>
@@ -40,21 +36,10 @@ const App = () => {
         <Route
           path="/playlists"
           element={
-            token ? (
-              <div className="flex flex-col items-center">
-                <button
-                  onClick={logout}
-                  className="mb-4 px-4 py-2 bg-red-500 rounded-lg hover:bg-red-600"
-                >
-                  Logout
-                </button>
-                <Playlists token={token} /> {/* Pass token to Playlists component */}
-              </div>
-            ) : (
-              <Navigate to="/" />
-            )
+            token ? <Playlists token={token} setToken={setToken} /> : <Navigate to="/" />
           }
         />
+         <Route path="/mint-form" element={<MintForm />} />
       </Routes>
     </Router>
   );
