@@ -10,7 +10,9 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@pinata/sdk": "^2.1.0",
     "axios": "^1.8.4",
+    "buffer": "^6.0.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "ethers": "^6.13.5",

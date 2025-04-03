@@ -17,8 +17,15 @@ const Playlists = ({ token, setToken }) => {
           Authorization: `Bearer ${token}`,
         },
       })
-        .then((response) => response.json())
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+          return response.json();
+        })
         .then((data) => {
+          console.log("Fetched Playlists: ", JSON.stringify(playlists, null, 2));
+
           if (data.items) {
             setPlaylists(data.items);
           } else {
@@ -26,8 +33,8 @@ const Playlists = ({ token, setToken }) => {
           }
         })
         .catch((error) => {
-          console.error("Error:", error);
-          setError("Failed to load playlists.");
+          console.error("Error fetching playlists:", error);
+          setError(error.message || "Failed to load playlists.");
         })
         .finally(() => {
           setLoading(false);
@@ -63,7 +70,12 @@ const Playlists = ({ token, setToken }) => {
       ) : playlists.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-10 mt-5">
           {playlists.map((playlist) => (
-            <Card key={playlist.id} name={playlist.name} url={playlist.external_urls.spotify} image={playlist.images?.[0]?.url} />
+            <Card
+              key={playlist.id}
+              name={playlist.name}
+              url={playlist.external_urls?.spotify}
+              image={playlist.images?.[0]?.url}
+            />
           ))}
         </div>
       ) : (

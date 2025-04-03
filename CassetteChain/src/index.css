@@ -1,7 +1,5 @@
-
 /* Optional: Smooth transition for page background */
 @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400..700&family=Press+Start+2P&display=swap');
-
 
 @tailwind base;
 @tailwind components;
@@ -32,4 +30,46 @@
   color: red;
   animation: heart-pop 1.5s ease-out forwards;
   pointer-events: none;
+}
+
+/* Modal Styles */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  width: 300px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.modal button {
+  margin-top: 10px;
+  background-color: #f44336;
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.modal button:hover {
+  background-color: #d32f2f;
+}
+
+.error {
+  color: red;
+  font-weight: bold;
 }
