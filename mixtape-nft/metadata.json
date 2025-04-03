@@ -1,0 +1,10 @@
+{
+  "name": "Mixtape NFT #1",
+  "description": "A unique NFT from the Mixtape collection. Listen to this exclusive mixtape!",
+  "image": "ipfs://bafkreihy4hzlplxmasbcfalwv2p6hx5fzo2m5tgnf3fylcvu4ymo4yu7cu",
+  "external_url": "https://open.spotify.com/playlist/7e1jlOnxGoAidmcZAX5W7s",
+  "attributes": [
+    { "trait_type": "Genre", "value": "Hip-Hop" },
+    { "trait_type": "Artist", "value": "Unknown" }
+  ]
+}
